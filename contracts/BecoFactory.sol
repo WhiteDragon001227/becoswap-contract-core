@@ -12,21 +12,21 @@ contract BecoFactory is IBecoFactory {
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
 
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+    event PairCreated(address indexed token0, address indexed token1, address pair, uint256);
 
     constructor(address _feeToSetter) public {
         feeToSetter = _feeToSetter;
     }
 
-    function allPairsLength() external view returns (uint) {
+    function allPairsLength() external view returns (uint256) {
         return allPairs.length;
     }
 
     function createPair(address tokenA, address tokenB) external returns (address pair) {
-        require(tokenA != tokenB, 'BecoSwap: IDENTICAL_ADDRESSES');
+        require(tokenA != tokenB, 'BecoFactory: IDENTICAL_ADDRESSES');
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), 'BecoSwap: ZERO_ADDRESS');
-        require(getPair[token0][token1] == address(0), 'BecoSwap: PAIR_EXISTS'); // single check is sufficient
+        require(token0 != address(0), 'BecoFactory: ZERO_ADDRESS');
+        require(getPair[token0][token1] == address(0), 'BecoFactory: PAIR_EXISTS'); // single check is sufficient
         bytes memory bytecode = type(BecoPair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
         assembly {
@@ -47,5 +47,16 @@ contract BecoFactory is IBecoFactory {
     function setFeeToSetter(address _feeToSetter) external {
         require(msg.sender == feeToSetter, 'BecoSwap: FORBIDDEN');
         feeToSetter = _feeToSetter;
+    }
+
+    function setDevFee(address _pair, uint8 _devFee) external {
+        require(msg.sender == feeToSetter, 'BecoSwap: FORBIDDEN');
+        require(_devFee > 0, 'BecoSwap: FORBIDDEN_FEE');
+        BecoPair(_pair).setDevFee(_devFee);
+    }
+
+    function setSwapFee(address _pair, uint32 _swapFee) external {
+        require(msg.sender == feeToSetter, 'BecoSwap: FORBIDDEN');
+        BecoPair(_pair).setSwapFee(_swapFee);
     }
 }
